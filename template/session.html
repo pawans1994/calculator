@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <title>Flask_Chat_App</title>
+  </head>
+  <body>
+
+  <form id="joinform" action="" method="POST">
+      <input type="text" class="username" placeholder="User Name"/>
+      <input type="submit" value="Join Calculation Board"/>
+    </form>
+
+    <form id="sendmessage" action="" method="POST">
+      <input type="text" class="message" placeholder="Messages"/>
+      <input type="submit" value="Calculate"/>
+    </form>
+
+    <h3 style='color: #ccc;font-size: 30px;'>No message yet..</h3>
+    <div class="message_holder"></div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    <script src="https://unpkg.com/mathjs/lib/browser/math.js"></script>
+    <script type="text/javascript">
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+      var joined = false;
+      var joinedUserSubmitted = undefined;
+      var joinedUser = undefined;
+
+      var formjoin = $('form[id="joinform"]').on('submit', function (e) {
+        e.preventDefault();
+        let user_name = $('input.username').val();
+        if(user_name !== undefined){
+          joinedUserSubmitted = user_name;
+          socket.emit('join room', {
+            username: user_name
+          })
+        }
+      });
+
+      socket.on( 'joined', function( msg ) {
+        alert(msg);
+        joinedUser = joinedUserSubmitted;
+        joined = true;
+      });
+
+      socket.on( 'connect', function() {
+
+      var form = $( 'form[id="sendmessage"]' ).on( 'submit', function( e ) {
+          e.preventDefault()
+          let user_input = $( 'input.message' ).val();
+          let calculation_value = undefined;
+          try{
+            if(joined == true){
+                socket.emit( 'my event', {
+                username: joinedUser,
+                expression: user_input,
+                calcval : math.evaluate(user_input)
+              } )
+            }else{
+              alert("Join by a username first.")
+            }
+          }catch (e) {
+            alert("Invalid math expression.");
+          }
+
+
+          $( 'input.message' ).val( '' ).focus()
+        } )
+      } );
+
+    socket.on( 'my response', function( msg ) {
+      console.log( msg )
+      if( typeof msg.calculation !== undefined ) {
+        $( 'h3' ).remove()
+        $('div.message_holder').empty()
+        calc = msg.calculation;
+        var i = 0;
+        for(i=calc.length-1; i>=0;i--){
+          $( 'div.message_holder' ).append( '<div><b style="color: #000">'+calc[i].username+'</b> '+calc[i].expression+' = </b> '+calc[i].calcval+'</div>' )
+        }
+
+      }
+      })
+
+
+
+    </script>
+
+  </body>
+  </html>
