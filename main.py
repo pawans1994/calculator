@@ -1,5 +1,10 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, join_room
+import os
+
+port = os.getenv('PORT')
+if not port:
+	port = 5000
 
 app = Flask(__name__,
             template_folder='template')
@@ -39,4 +44,4 @@ def handle_join_room(json, methods=['GET', 'POST']):
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, port=port)
